@@ -1,0 +1,10 @@
+Question #1
+	Make a list of 100 cars instead of all the database
+
+Question #2
+	Provide a list of all the car with a milleage below the average milleage of all the car in the list
+
+Question #3
+	Find the average price of cars for each brand and fuel type combination, only considering cars that have had at most one previous owner and are less than 5 years old (based on the year field assuming the current year is 2025).
+
+Order the results by average price in descending order, and show the top 10 combinations.
