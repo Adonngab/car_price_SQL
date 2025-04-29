@@ -3516,7 +3516,7 @@ INSERT INTO  car_price_dataset VALUES( 3500 , 'BMW', '3 Series', 2022, 1.3, 'Pet
 
 -- QUERY #1 
 -- Get an overview of the data. Instead of looking at the entire table, the focus will be on just 100 rows. 
-select * from car_price_dataset limit 0, 100;
+select * from car_price_dataset;
 
 -- QUERY #2
 -- Provide a list of all the car with a milleage below the average milleage of all the car in the list.
@@ -3524,4 +3524,56 @@ with t(averagemilleage) as(
 select avg(milleage) from car_price_dataset)
 select id, concat(year, ' ', brand,' ', model) as car, fuel_type, transmission, milleage, price from car_price_dataset,t
 where car_price_dataset.milleage <= t.averagemilleage;
-select avg(milleage) from car_price_dataset;
+
+-- QUERY #3
+-- Find the average price of cars for each brand and fuel type combination, 
+-- only considering cars that have had at most one previous owner and are less than 5 years old 
+-- (based on the year field assuming the current year is 2025).
+-- Order the results by average price in descending order, and show the top 10 combinations.
+with s(averageprice) as (
+select avg(price) from car_price_dataset
+where year > 2020 and owner_count <2)
+select  id, concat(year, ' ', brand,' ', model) as car, brand,year , engine_size , fuel_type, transmission, milleage, price from car_price_dataset,s
+where car_price_dataset.price <= s.averageprice and year > 2020 and owner_count <2
+order by price asc;
+
+-- or you can make it with each brand gives only one car with the model and the cheapest price
+
+
+
+
+WITH average_price_cte AS (
+    SELECT AVG(price) AS average_price
+    FROM car_price_dataset
+    WHERE year > 2020 AND owner_count < 2
+), -- this going to make a average price of every car that come out after 2020 and have a single owner count 
+
+filtered_cars AS (
+    SELECT *
+    FROM car_price_dataset
+    WHERE year > 2020 AND owner_count < 2
+), -- this going to make a list of every car that come out after 2020 and have a single owner count 
+below_avg_cars AS (
+    SELECT *
+    FROM filtered_cars, average_price_cte
+    WHERE price <= average_price
+), -- this is going to show a list from "filtered_cars" where the price is below average price that we found before
+ranked_cars AS (
+    SELECT *,
+           ROW_NUMBER() OVER (PARTITION BY brand ORDER BY price ASC) AS rn
+    FROM below_avg_cars
+)-- this is going to make a group by brand in the list, and inside that group is ranked by the cheapest price
+SELECT 
+    id,
+    CONCAT(year, ' ', brand, ' ', model) AS car,
+    brand,
+    fuel_type,
+    transmission,
+    milleage,
+    price
+FROM 
+    ranked_cars
+WHERE 
+    rn = 1
+ORDER BY 
+    price;
